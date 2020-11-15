@@ -1,16 +1,17 @@
 import os
 import xlrd
 import sys
+import json
 
 dataList = []
-speedLimits = {
-    'sz': 130,
-    'm': 130,
-    'b': 100,
-    't': 80,
-    'mk': 1000 # "nincs korlát"
-}
+with open('countries.json', encoding='utf-8') as json_file:
+    data = json.load(json_file)
+    countries = data['countries']
+    vehicletypes = data['vehicletypes']
+    speedLimits = data['speedLimits']
+
 def elsoFeladat():
+    print("1. feladat")
     speeders = 0
     for i,v in enumerate(dataList):
         felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
@@ -21,8 +22,22 @@ def elsoFeladat():
     masodikFeladat()
 
 def masodikFeladat():
-    print("aa")
-    
+    print("2. feladat")
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
+        if merohely == 'B' and (jarmutipus == 'sz' or jarmutipus == 'b' or jarmutipus == 't'):
+            if int(sebesseg) > speedLimits[jarmutipus]:
+                print("Típus: " + converter(jarmutipus) + ", felségjel: " + felsegjel +"(" + str(converter(felsegjel)) + ")" + ", rendszám: " + rendszam + ", túllépés értéke: " + str(int(sebesseg) - speedLimits[jarmutipus]) + "km/h")
+
+def converter(data):
+    if data in vehicletypes:
+        return vehicletypes[data]
+    elif data in countries:
+        return countries[data]
+    else:
+        return "ismeretlen"
+     
+
 def convToList(fileType, Thefile):
     if fileType == 1:
         for line in Thefile:
@@ -31,7 +46,6 @@ def convToList(fileType, Thefile):
         for x in range(Thefile.nrows):
             dataList.append(Thefile.cell_value(x,0))
     elsoFeladat()
-    print(dataList)           
 
 def convToStrings(data):
     strings = data.split(",", -1)
