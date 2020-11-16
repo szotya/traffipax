@@ -1,9 +1,4 @@
-import os
-import xlrd
-import sys
-import json
-import re
-import datetime
+import os, xlrd, sys, json, re, datetime
 
 dataList = []
 with open('countries.json', encoding='utf-8') as json_file:
@@ -74,6 +69,11 @@ def otodikFeladat():
         if merohely == 'C' and is_between(ido,('09:00:01', '13:00:01')):
             if int(sebesseg) <= speedLimits[jarmutipus] and int(sebesseg) > 110:
                 print(felsegjel+converter(felsegjel),rendszam,sebesseg+"km/h",ido)
+    hatodikFeladat()
+
+def hatodikFeladat()
+    print("6. feladat")
+    
 
 def is_between(time, time_range):
     if time_range[1] < time_range[0]:
