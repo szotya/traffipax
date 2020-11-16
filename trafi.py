@@ -2,6 +2,8 @@ import os
 import xlrd
 import sys
 import json
+import re
+import datetime
 
 dataList = []
 with open('countries.json', encoding='utf-8') as json_file:
@@ -27,16 +29,64 @@ def masodikFeladat():
         felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
         if merohely == 'B' and (jarmutipus == 'sz' or jarmutipus == 'b' or jarmutipus == 't'):
             if int(sebesseg) > speedLimits[jarmutipus]:
-                print("Típus: " + converter(jarmutipus) + ", felségjel: " + felsegjel +"(" + str(converter(felsegjel)) + ")" + ", rendszám: " + rendszam + ", túllépés értéke: " + str(int(sebesseg) - speedLimits[jarmutipus]) + "km/h")
+                print("Típus: " + converter(jarmutipus) + ", felségjel: " + felsegjel + converter(felsegjel) + ", rendszám: " + rendszam + ", túllépés értéke: " + str(int(sebesseg) - speedLimits[jarmutipus]) + "km/h")
+    harmadikFeladat()
+
+def harmadikFeladat():
+    print("3. feladat")
+    maxSpeed = 0
+    maxSpeeders = []
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
+        if merohely == 'C' and int(sebesseg) > maxSpeed:
+            maxSpeed = int(sebesseg)
+            maxSpeeders.clear()
+            maxSpeeders.append(i)
+        elif merohely == 'C' and int(sebesseg) == maxSpeed:
+            maxSpeeders.append(i)
+    for v in maxSpeeders:
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(dataList[v])
+        if int(sebesseg) > speedLimits[jarmutipus]: 
+            tullepes = "túllépte"
+        else:
+            tullepes = "nem_lépte_túl"
+        print(sebesseg + "km/h", tullepes, converter(jarmutipus), felsegjel + converter(felsegjel) ,rendszam,ido)
+    negyedikFeladat()
+
+def negyedikFeladat():
+    print("4. feladat")
+    correct_format = re.compile('^[a-zA-Z]{3}-[0-9]{3}$')
+    counter = 0
+    crossedVeh = []
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
+        if correct_format.match(rendszam) is not None:
+            if rendszam not in crossedVeh:
+                counter += 1
+                crossedVeh.append(rendszam)
+    print(counter)
+    otodikFeladat()
+
+def otodikFeladat():
+    print("5. feladat")
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
+        if merohely == 'C' and is_between(ido,('09:00:01', '13:00:01')):
+            if int(sebesseg) <= speedLimits[jarmutipus] and int(sebesseg) > 110:
+                print(felsegjel+converter(felsegjel),rendszam,sebesseg+"km/h",ido)
+
+def is_between(time, time_range):
+    if time_range[1] < time_range[0]:
+        return time >= time_range[0] or time <= time_range[1]
+    return time_range[0] <= time <= time_range[1]
 
 def converter(data):
     if data in vehicletypes:
         return vehicletypes[data]
     elif data in countries:
-        return countries[data]
+        return "(" + countries[data] + ")"
     else:
-        return "ismeretlen"
-     
+        return "ismeretlen" 
 
 def convToList(fileType, Thefile):
     if fileType == 1:
