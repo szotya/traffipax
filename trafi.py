@@ -1,6 +1,11 @@
 import os, xlrd, sys, json, re, datetime
 
 dataList = []
+devicePlaces = {}
+ANeighbors = ['B']
+BNeighbors = ['A', 'C']
+CNeighbors = ['B']
+
 with open('countries.json', encoding='utf-8') as json_file:
     data = json.load(json_file)
     countries = data['countries']
@@ -71,14 +76,47 @@ def otodikFeladat():
                 print(felsegjel+converter(felsegjel),rendszam,sebesseg+"km/h",ido)
     hatodikFeladat()
 
-def hatodikFeladat()
+def hatodikFeladat():
     print("6. feladat")
+    crossedVehicles = []
+    multipleCrosses = []
+    multipleCrossed_id = []
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
+        if rendszam in crossedVehicles:
+            multipleCrosses.append(rendszam)
+        else:
+            crossedVehicles.append(rendszam)
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
+        if rendszam in multipleCrosses:
+            multipleCrossed_id.append(i)
+    iter_multipleCrossed_id = iter(multipleCrossed_id)
+    next(iter_multipleCrossed_id)
+    for i,v in enumerate(iter_multipleCrossed_id):
+        felsegjel1,rendszam1,merohely1,jarmutipus1,sebesseg1,ido1 = convToStrings(dataList[int(v-1)])
+        felsegjel2,rendszam2,merohely2,jarmutipus2,sebesseg2,ido2 = convToStrings(dataList[v])
+        if merohely1 in merConv(merohely2) and rendszam1 == rendszam2:
+            elapsedTime = datetime.datetime.strptime(ido2,'%H:%M:%S') - datetime.datetime.strptime(ido1,'%H:%M:%S')
+            hours = elapsedTime.total_seconds()/3600
+            totalDistance = int(devicePlaces[merohely2]) - int(devicePlaces[merohely1])
+            avgSpeed = totalDistance/hours
+            if avgSpeed > speedLimits[jarmutipus1]:
+                print(felsegjel + converter(felsegjel1),rendszam1, merohely1 + " -> " + merohely2, str(avgSpeed) + "km/h")
     
 
 def is_between(time, time_range):
     if time_range[1] < time_range[0]:
         return time >= time_range[0] or time <= time_range[1]
     return time_range[0] <= time <= time_range[1]
+
+def merConv(data):
+    if data == 'A':
+        return ANeighbors
+    elif data == 'B':
+        return BNeighbors
+    elif data == 'C':
+        return CNeighbors
 
 def converter(data):
     if data in vehicletypes:
@@ -89,10 +127,27 @@ def converter(data):
         return "ismeretlen" 
 
 def convToList(fileType, Thefile):
+    #.txt
     if fileType == 1:
+        places = Thefile.readline()
+        strings = convToStrings(places)
+        letter = ''
+        for index,place in enumerate(strings):
+            if index == 0:
+                 letter = 'A' 
+            elif index == 1:
+                 letter = 'B'
+            elif index == 2:
+                letter = 'C'
+            devicePlaces[letter] = place
         for line in Thefile:
-            dataList.append(line)
+            dataList.append(line.strip())
+    #.xlsx -->todo: excel első sorból kiolvasás még nem jó
     elif fileType == 2:
+        places = Thefile.cell_value(0,0)
+        strings = convToStrings(places)
+        for place in strings:
+            devicePlaces.append(place)
         for x in range(Thefile.nrows):
             dataList.append(Thefile.cell_value(x,0))
     elsoFeladat()
@@ -119,4 +174,3 @@ def choose():
         choose()
 
 choose()
-
