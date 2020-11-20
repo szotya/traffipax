@@ -97,13 +97,53 @@ def hatodikFeladat():
         felsegjel1,rendszam1,merohely1,jarmutipus1,sebesseg1,ido1 = convToStrings(dataList[int(v-1)])
         felsegjel2,rendszam2,merohely2,jarmutipus2,sebesseg2,ido2 = convToStrings(dataList[v])
         if merohely1 in merConv(merohely2) and rendszam1 == rendszam2:
-            elapsedTime = datetime.datetime.strptime(ido2,'%H:%M:%S') - datetime.datetime.strptime(ido1,'%H:%M:%S')
-            hours = elapsedTime.total_seconds()/3600
-            totalDistance = int(devicePlaces[merohely2]) - int(devicePlaces[merohely1])
-            avgSpeed = totalDistance/hours
+            avgSpeed = getAvgSpeed(ido1,ido2,devicePlaces[merohely1],devicePlaces[merohely2])
             if avgSpeed > speedLimits[jarmutipus1]:
-                print(felsegjel + converter(felsegjel1),rendszam1, merohely1 + " -> " + merohely2, str(avgSpeed) + "km/h")
+                print(felsegjel1 + converter(felsegjel1),rendszam1, merohely1 + " -> " + merohely2, str(avgSpeed) + "km/h")
+    hetedikFeladat()
+
+def hetedikFeladat():
+    ACrossed = []
+    BCrossed = []
+    CCrossed = []
+    time1 = ''
+    time2 = ''
+    distance1 = ''
+    distance2 = ''
+    print("7. feladat")
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
+        if merohely == 'A':
+            ACrossed.append(rendszam)
+        elif merohely == 'B':
+            BCrossed.append(rendszam)
+        elif merohely == 'C':
+            CCrossed.append(rendszam)
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
+        if rendszam in ACrossed and rendszam in BCrossed and rendszam in CCrossed:
+            if merohely == 'A':
+                time1 = ido
+                distance1 = devicePlaces[merohely]
+            elif merohely == 'C':
+                time2 = ido
+                distance2 = devicePlaces[merohely]
+        if time1 and time2 and distance1 and distance2:
+            avgSpeed = getAvgSpeed(time1,time2,distance1,distance2)
+            if avgSpeed > int(speedLimits[jarmutipus]):
+                print("igen " + felsegjel+converter(felsegjel), rendszam)
+            else:
+                print("nem " + felsegjel+converter(felsegjel), rendszam)
+            time1,time2,distance1,distance2 = '','','',''
+
     
+def getAvgSpeed(startTime, endTime, distance1, distance2):
+    elapsedTime = datetime.datetime.strptime(endTime,'%H:%M:%S') - datetime.datetime.strptime(startTime,'%H:%M:%S')
+    hours = elapsedTime.total_seconds()/3600
+    totalDistance = int(distance2) - int(distance1)
+    avgSpeed = totalDistance/hours
+    return int(avgSpeed)
+
 
 def is_between(time, time_range):
     if time_range[1] < time_range[0]:
