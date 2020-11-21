@@ -1,4 +1,7 @@
-import os, xlrd, sys, json, re, datetime
+# coding=utf-8
+import datetime, json, os, re, sys
+
+#import xlrd
 
 dataList = []
 devicePlaces = {}
@@ -6,7 +9,7 @@ ANeighbors = ['B']
 BNeighbors = ['A', 'C']
 CNeighbors = ['B']
 
-with open('countries.json', encoding='utf-8') as json_file:
+with open('countries.json') as json_file:
     data = json.load(json_file)
     countries = data['countries']
     vehicletypes = data['vehicletypes']
@@ -15,7 +18,7 @@ with open('countries.json', encoding='utf-8') as json_file:
 def elsoFeladat():
     print("1. feladat")
     speeders = 0
-    for i,v in enumerate(dataList):
+    for v in dataList:
         felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
         if merohely == 'A' and jarmutipus == 'm':
             if int(sebesseg) > speedLimits[jarmutipus]:
@@ -25,7 +28,7 @@ def elsoFeladat():
 
 def masodikFeladat():
     print("2. feladat")
-    for i,v in enumerate(dataList):
+    for v in dataList:
         felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
         if merohely == 'B' and (jarmutipus == 'sz' or jarmutipus == 'b' or jarmutipus == 't'):
             if int(sebesseg) > speedLimits[jarmutipus]:
@@ -58,7 +61,7 @@ def negyedikFeladat():
     correct_format = re.compile('^[a-zA-Z]{3}-[0-9]{3}$')
     counter = 0
     crossedVeh = []
-    for i,v in enumerate(dataList):
+    for v in dataList:
         felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
         if correct_format.match(rendszam) is not None:
             if rendszam not in crossedVeh:
@@ -69,7 +72,7 @@ def negyedikFeladat():
 
 def otodikFeladat():
     print("5. feladat")
-    for i,v in enumerate(dataList):
+    for v in dataList:
         felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
         if merohely == 'C' and is_between(ido,('09:00:01', '13:00:01')):
             if int(sebesseg) <= speedLimits[jarmutipus] and int(sebesseg) > 110:
@@ -103,6 +106,7 @@ def hatodikFeladat():
     hetedikFeladat()
 
 def hetedikFeladat():
+    print("7. feladat")
     ACrossed = []
     BCrossed = []
     CCrossed = []
@@ -110,8 +114,7 @@ def hetedikFeladat():
     time2 = ''
     distance1 = ''
     distance2 = ''
-    print("7. feladat")
-    for i,v in enumerate(dataList):
+    for v in dataList:
         felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
         if merohely == 'A':
             ACrossed.append(rendszam)
@@ -135,15 +138,57 @@ def hetedikFeladat():
             else:
                 print("nem " + felsegjel+converter(felsegjel), rendszam)
             time1,time2,distance1,distance2 = '','','',''
+    nyolcadikFeladat()
 
-    
+def nyolcadikFeladat():
+    print("8. feladat")
+    rendszam_in = input()
+    rendszamok = {}
+    speeding = False
+    speedingPoints = []
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido =      convToStrings(v)
+        if rendszam_in == rendszam:
+            rendszamok[i] = rendszam
+    if rendszam_in in rendszamok.values():
+        keys = rendszamok.keys()
+        for v in keys:
+            felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(dataList[v])
+            if int(sebesseg) > speedLimits[jarmutipus]:
+                speeding = True
+                speedingPoints.append(merohely)
+        if speeding == True:
+            print("szerepel túllépte(" + listToString( speedingPoints) + ")")
+        elif speeding == False:
+            print("szerepel nem_lépte_túl")
+    else:
+        print("nem szerepel")
+    kilencediFeladat()
+
+def kilencediFeladat():
+    print("9. feladat")
+    correct_format = re.compile('^[a-zA-Z]{3}-[0-9]{3}$')
+    for i,v in enumerate(dataList):
+        felsegjel,rendszam,merohely,jarmutipus,sebesseg,ido = convToStrings(v)
+        if felsegjel == 'H':
+            if correct_format.match(rendszam) is None:
+                print(rendszam)
+
+def listToString(inList):
+    emptyString = ''
+    for i,v in enumerate(inList):
+        if i == len(inList):
+            emptyString += v
+        else:
+            emptyString += v + ","
+    return emptyString
+
 def getAvgSpeed(startTime, endTime, distance1, distance2):
     elapsedTime = datetime.datetime.strptime(endTime,'%H:%M:%S') - datetime.datetime.strptime(startTime,'%H:%M:%S')
     hours = elapsedTime.total_seconds()/3600
     totalDistance = int(distance2) - int(distance1)
     avgSpeed = totalDistance/hours
     return int(avgSpeed)
-
 
 def is_between(time, time_range):
     if time_range[1] < time_range[0]:
@@ -183,13 +228,13 @@ def convToList(fileType, Thefile):
         for line in Thefile:
             dataList.append(line.strip())
     #.xlsx -->todo: excel első sorból kiolvasás még nem jó
-    elif fileType == 2:
-        places = Thefile.cell_value(0,0)
-        strings = convToStrings(places)
-        for place in strings:
-            devicePlaces.append(place)
-        for x in range(Thefile.nrows):
-            dataList.append(Thefile.cell_value(x,0))
+    #elif fileType == 2:
+        #places = Thefile.cell_value(0,0)
+        #strings = convToStrings(places)
+        #for place in strings:
+            #devicePlaces.append(place)
+        #for x in range(Thefile.nrows):
+            #dataList.append(Thefile.cell_value(x,0))
     elsoFeladat()
 
 def convToStrings(data):
@@ -203,10 +248,10 @@ def choose():
         if filePath.endswith('.txt'):
             theFile = open(filePath, 'r')
             convToList(1,theFile)
-        elif filePath.endswith('.xlsx'):
-            inpWorkbook = xlrd.open_workbook(filePath)
-            inWorksheet = inpWorkbook.sheet_by_index(0)
-            convToList(2, inWorksheet)
+        #elif filePath.endswith('.xlsx'):
+            #inpWorkbook = xlrd.open_workbook(filePath)
+            #inWorksheet = inpWorkbook.sheet_by_index(0)
+            #convToList(2, inWorksheet)
         else:
             print('Hibás fájlformátum(.txt/.xlsx)')
     else:
