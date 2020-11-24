@@ -1,20 +1,25 @@
 # coding=utf-8
 import datetime, json, os, re, sys
+#excelehez
+import xlrd
 
-#import xlrd
-
+#ebben a listában vannak a beolvasott adatok
 dataList = []
+#ebben a dictionaryban vanna a mérőműszerek helyei
 devicePlaces = {}
+#egyes mérőpontok szomszédjai
 ANeighbors = ['B']
 BNeighbors = ['A', 'C']
 CNeighbors = ['B']
 
-with open('countries.json') as json_file:
+#json fájl megnyitása (ebbe vannak dictionaryk)
+with open('countries.json', encoding='utf-8') as json_file:
     data = json.load(json_file)
     countries = data['countries']
     vehicletypes = data['vehicletypes']
     speedLimits = data['speedLimits']
 
+#1. feladat
 def elsoFeladat():
     print("1. feladat")
     speeders = 0
@@ -26,6 +31,7 @@ def elsoFeladat():
     print(speeders)
     masodikFeladat()
 
+#2. feladat
 def masodikFeladat():
     print("2. feladat")
     for v in dataList:
@@ -35,6 +41,7 @@ def masodikFeladat():
                 print("Típus: " + converter(jarmutipus) + ", felségjel: " + felsegjel + converter(felsegjel) + ", rendszám: " + rendszam + ", túllépés értéke: " + str(int(sebesseg) - speedLimits[jarmutipus]) + "km/h")
     harmadikFeladat()
 
+#3. feladat
 def harmadikFeladat():
     print("3. feladat")
     maxSpeed = 0
@@ -56,6 +63,7 @@ def harmadikFeladat():
         print(sebesseg + "km/h", tullepes, converter(jarmutipus), felsegjel + converter(felsegjel) ,rendszam,ido)
     negyedikFeladat()
 
+#4. feladat
 def negyedikFeladat():
     print("4. feladat")
     correct_format = re.compile('^[a-zA-Z]{3}-[0-9]{3}$')
@@ -70,6 +78,7 @@ def negyedikFeladat():
     print(counter)
     otodikFeladat()
 
+#5. feladat
 def otodikFeladat():
     print("5. feladat")
     for v in dataList:
@@ -79,6 +88,7 @@ def otodikFeladat():
                 print(felsegjel+converter(felsegjel),rendszam,sebesseg+"km/h",ido)
     hatodikFeladat()
 
+#6. feladat
 def hatodikFeladat():
     print("6. feladat")
     crossedVehicles = []
@@ -105,6 +115,7 @@ def hatodikFeladat():
                 print(felsegjel1 + converter(felsegjel1),rendszam1, merohely1 + " -> " + merohely2, str(avgSpeed) + "km/h")
     hetedikFeladat()
 
+#7. feladat
 def hetedikFeladat():
     print("7. feladat")
     ACrossed = []
@@ -140,6 +151,7 @@ def hetedikFeladat():
             time1,time2,distance1,distance2 = '','','',''
     nyolcadikFeladat()
 
+#8. feladat
 def nyolcadikFeladat():
     print("8. feladat")
     rendszam_in = input()
@@ -165,6 +177,7 @@ def nyolcadikFeladat():
         print("nem szerepel")
     kilencediFeladat()
 
+#9. feladat
 def kilencediFeladat():
     print("9. feladat")
     correct_format = re.compile('^[a-zA-Z]{3}-[0-9]{3}$')
@@ -174,6 +187,7 @@ def kilencediFeladat():
             if correct_format.match(rendszam) is None:
                 print(rendszam)
 
+#segédfunkció, egy egész listát egy darab stringé alakít
 def listToString(inList):
     emptyString = ''
     for i,v in enumerate(inList):
@@ -183,6 +197,7 @@ def listToString(inList):
             emptyString += v + ","
     return emptyString
 
+#segédfunkció, kiszámítja az átlagsebességet
 def getAvgSpeed(startTime, endTime, distance1, distance2):
     elapsedTime = datetime.datetime.strptime(endTime,'%H:%M:%S') - datetime.datetime.strptime(startTime,'%H:%M:%S')
     hours = elapsedTime.total_seconds()/3600
@@ -190,6 +205,7 @@ def getAvgSpeed(startTime, endTime, distance1, distance2):
     avgSpeed = totalDistance/hours
     return int(avgSpeed)
 
+#segédfunkció, ellenőrzi, hogy egy megadott időpont egy megadott intervallumon belül van -e
 def is_between(time, time_range):
     if time_range[1] < time_range[0]:
         return time >= time_range[0] or time <= time_range[1]
@@ -203,6 +219,7 @@ def merConv(data):
     elif data == 'C':
         return CNeighbors
 
+#segédfunkció, a röviditést teljes fomrába alakítja(pl.: 'm' -> motor vagy 'H' -> (magyarország))
 def converter(data):
     if data in vehicletypes:
         return vehicletypes[data]
@@ -211,6 +228,7 @@ def converter(data):
     else:
         return "ismeretlen" 
 
+#szétválasztja a mérőpontokat és az adatokat majd dictionaryba, illetve listába rakja azokat
 def convToList(fileType, Thefile):
     #.txt
     if fileType == 1:
@@ -227,20 +245,29 @@ def convToList(fileType, Thefile):
             devicePlaces[letter] = place
         for line in Thefile:
             dataList.append(line.strip())
-    #.xlsx -->todo: excel első sorból kiolvasás még nem jó
-    #elif fileType == 2:
-        #places = Thefile.cell_value(0,0)
-        #strings = convToStrings(places)
-        #for place in strings:
-            #devicePlaces.append(place)
-        #for x in range(Thefile.nrows):
-            #dataList.append(Thefile.cell_value(x,0))
+    elif fileType == 2:
+        places = Thefile.cell_value(0,0)
+        strings = convToStrings(places)
+        letter = ''
+        for index, place in enumerate(strings):
+            if index == 0:
+                 letter = 'A' 
+            elif index == 1:
+                 letter = 'B'
+            elif index == 2:
+                letter = 'C'
+            devicePlaces[letter] = place
+        for x in range(Thefile.nrows -1):
+            dataList.append(Thefile.cell_value(x +1,0))
+    print(dataList)
     elsoFeladat()
 
+#segédfunkció, a megadott adatsort szétszed stringekre, hogy az adatsor részei külön kezelhetőek legyenek
 def convToStrings(data):
     strings = data.split(",", -1)
     return strings
 
+#itt kell megadni, hogy melyik fájlból szeretnénk beolvasni -> conToList()
 def choose():
     print("Kérem ajda meg a fájl elérési útvonalát: ")
     filePath = input()
@@ -248,10 +275,10 @@ def choose():
         if filePath.endswith('.txt'):
             theFile = open(filePath, 'r')
             convToList(1,theFile)
-        #elif filePath.endswith('.xlsx'):
-            #inpWorkbook = xlrd.open_workbook(filePath)
-            #inWorksheet = inpWorkbook.sheet_by_index(0)
-            #convToList(2, inWorksheet)
+        elif filePath.endswith('.xlsx'):
+            inpWorkbook = xlrd.open_workbook(filePath)
+            inWorksheet = inpWorkbook.sheet_by_index(0)
+            convToList(2, inWorksheet)
         else:
             print('Hibás fájlformátum(.txt/.xlsx)')
     else:
